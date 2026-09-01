@@ -9,7 +9,8 @@ class QdrantVectorStore:
     """Class สำหรับจัดการการเชื่อมต่อ Collection และ Indexing ข้อมูลลง Qdrant Vector DB"""
 
     def __init__(self, host: str = "localhost", port: int = 6333, collection_name: str = "compliance_docs"):
-        self.client = QdrantClient(host=host, port=port)
+
+        self.client = QdrantClient(host=host, port=port, check_compatibility=False)
         self.collection_name = collection_name
 
     def create_collection_if_not_exists(self, vector_size: int = 1536):
@@ -72,12 +73,11 @@ class QdrantVectorStore:
                 ]
             )
 
-        search_result = self.client.search(
-            collection_name=self.collection_name,
-            query_vector=query_vector,
-            query_filter=query_filter,
-            limit=top_k
-        )
+        search_result = self.client.query_points(
+        collection_name=self.collection_name,
+        query=query_vector,  
+        limit=top_k,
+    ).points
 
         results = []
         for hit in search_result:
