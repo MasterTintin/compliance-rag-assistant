@@ -1,0 +1,29 @@
+[
+  {
+    "filename": "sec_9563s_consolidated.pdf",
+    "url": "https://publish.sec.or.th/nrs/9563s.pdf",
+    "title": "การคำนวณและการรายงานการคำนวณเงินกองทุนของผู้ประกอบธุรกิจ (ฉบับประมวล)",
+    "issuer": "ก.ล.ต.",
+    "doc_type": "consolidated",
+    "notes": "ฉบับรวมการแก้ไขทั้งหมด ใช้เป็น ground truth ของฉบับปัจจุบัน",
+    "downloaded": true
+  },
+  {
+    "filename": "sec_10426_amendment4.pdf",
+    "url": "https://publish.sec.or.th/nrs/10426p_r.pdf",
+    "title": "ประกาศ กธ. 30/2567 การดำรงเงินกองทุนของผู้ประกอบธุรกิจ (ฉบับที่ 4)",
+    "issuer": "ก.ล.ต.",
+    "doc_type": "amendment",
+    "notes": "แก้ไข กธ. 26/2563 — ใช้ทดสอบ citation ข้ามฉบับ",
+    "downloaded": true
+  },
+  {
+    "filename": "sec_9563p_rate_report.pdf",
+    "url": "https://publish.sec.or.th/nrs/9563p_r.pdf",
+    "title": "สธ. 64/2563 การคำนวณและการรายงานการคำนวณเงินกองทุน",
+    "issuer": "ก.ล.ต.",
+    "doc_type": "related",
+    "notes": "เอกสารย่อยที่อ้างอิงกลับไปยัง กธ. 26/2563",
+    "downloaded": true
+  }
+]
