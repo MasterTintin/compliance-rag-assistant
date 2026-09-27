@@ -45,3 +45,6 @@ qdrant_data/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Data
+data/sample_docs/*.pdf
