@@ -16,14 +16,5 @@
     "doc_type": "amendment",
     "notes": "แก้ไข กธ. 26/2563 — ใช้ทดสอบ citation ข้ามฉบับ",
     "downloaded": true
-  },
-  {
-    "filename": "sec_9563p_rate_report.pdf",
-    "url": "https://publish.sec.or.th/nrs/9563p_r.pdf",
-    "title": "สธ. 64/2563 การคำนวณและการรายงานการคำนวณเงินกองทุน",
-    "issuer": "ก.ล.ต.",
-    "doc_type": "related",
-    "notes": "เอกสารย่อยที่อ้างอิงกลับไปยัง กธ. 26/2563",
-    "downloaded": true
   }
 ]
