@@ -4,6 +4,10 @@
 > documents) พร้อม citation ที่ตรวจสอบย้อนกลับได้เสมอ — สร้างขึ้นเพื่อจำลองปัญหาจริงที่ compliance
 > officer ในสถาบันการเงินเจอ ไม่ใช่แค่ demo "chat with PDF" ทั่วไป
 
+[![CI](https://github.com/USERNAME/compliance-rag-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/compliance-rag-assistant/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+
 ---
 
 ## ทำไมโปรเจกต์นี้ถึงต่างจาก RAG demo ทั่วไป
@@ -20,16 +24,18 @@ demo ทั่วไปมักข้าม:
 
 ## Demo
 
-**ตัวอย่างคำถาม-คำตอบ:**
+**สถานะตอนนี้:** Retrieval pipeline (ingestion → chunking → embedding → vector search) รันและทดสอบแล้วจริงกับเอกสารตัวอย่าง — ค้นเจอ chunk ที่เกี่ยวข้องถูกต้องตามที่คาดไว้ (ดู log ใน `demo.py`) ส่วน Generation service (`src/generation/generator.py`) เขียนเสร็จและเชื่อมเข้า pipeline เรียบร้อยแล้ว แต่ยังไม่ได้รัน live demo แบบเต็มเพราะติดเรื่อง API credit ชั่วคราว — โค้ดพร้อมรันได้ทันทีเมื่อมี `ANTHROPIC_API_KEY` ที่มีเครดิต
+
+**ตัวอย่าง output ที่คาดหวัง** (ตามรูปแบบที่กำหนดใน system prompt ของ `generator.py` — ยังไม่ใช่ output จริงจากการรัน จะอัปเดตด้วย log จริงเร็วๆ นี้):
 
 ```
-Q: ธนาคารพาณิชย์ต้องดำรงเงินกองทุนขั้นต่ำเท่าไหร่ตามเกณฑ์ Basel III?
+Q: การดำรงเงินกองทุนของผู้ประกอบธุรกิจฉบับปัจจุบันคือฉบับไหน?
 
-A: ตามประกาศ ธปท. ที่ สนส. XX/25XX ธนาคารพาณิชย์ต้องดำรงอัตราส่วนเงินกองทุนชั้นที่ 1
-   ที่เป็นส่วนของเจ้าของ (CET1) ไม่ต่ำกว่า 4.5% ของสินทรัพย์เสี่ยง
+A: ฉบับปัจจุบันคือประกาศ สธ. 64/2563 (ฉบับประมวล) ซึ่งรวมการแก้ไขทั้งหมดไว้เป็นฉบับเดียว [1]
+   รวมถึงการแก้ไขล่าสุดตามประกาศ กธ. 30/2567 (ฉบับที่ 4) [2]
 
-   ⚠️ นี่คือตัวอย่างเพื่อการทดสอบระบบเท่านั้น ไม่ใช่คำแนะนำทางกฎหมาย โปรดตรวจสอบกับ
-   เอกสารต้นฉบับหรือผู้เชี่ยวชาญก่อนนำไปใช้จริง
+   [1] sec_9563s_consolidated.pdf
+   [2] sec_10426_amendment4.pdf
 ```
 
 ## Architecture
@@ -63,7 +69,7 @@ cd compliance-rag-assistant
 cp .env.example .env
 # แก้ .env ใส่ API key ของตัวเอง
 
-# 3. รัน infrastructure
+# 3. รัน infrastructure (Qdrant + Redis)
 docker compose up -d
 
 # 4. ติดตั้ง dependencies
@@ -87,16 +93,16 @@ curl -X POST http://localhost:8000/query \
 
 ```
 ├── src/
-│   ├── ingestion/      # แปลงเอกสาร → chunks → vector DB
-│   ├── retrieval/      # hybrid search + re-ranking
-│   ├── generation/      # grounded generation + citation
-│   ├── api/             # FastAPI endpoints
-│   └── eval/             # evaluation harness
-├── tests/               # unit + integration tests
+│   ├── ingestion/     
+│   ├── retrieval/      
+│   ├── generation/      
+│   ├── api/             
+│   └── eval/            
+├── tests/               
 ├── docs/
-│   └── architecture.md  # design decisions & trade-offs
+│   └── architecture.md  
 ├── docker/
-└── data/sample_docs/    # เอกสารตัวอย่างสำหรับทดสอบ
+└── data/sample_docs/    
 ```
 
 ## Evaluation Results
@@ -114,6 +120,7 @@ curl -X POST http://localhost:8000/query \
 
 ## Known Limitations
 
+- Generation service ยังไม่ได้รัน live demo แบบเต็ม (ติด API credit ชั่วคราว) — retrieval ทดสอบแล้วจริง โค้ด generation พร้อมรันได้ทันทีเมื่อมีเครดิต
 - ยังไม่รองรับเอกสารภาพสแกนคุณภาพต่ำ (ต้องใช้ OCR pipeline เพิ่ม)
 - ยังไม่มี role-based access control — v1 นี้สมมติว่าผู้ใช้ทุกคนเข้าถึงเอกสารได้เท่ากัน
 - ดู future work เพิ่มเติมใน [`docs/architecture.md`](docs/architecture.md)
@@ -127,3 +134,6 @@ curl -X POST http://localhost:8000/query \
 MIT — ดูรายละเอียดใน [LICENSE](LICENSE)
 
 ---
+
+*โปรเจกต์นี้ใช้เอกสารสาธารณะจาก ธปท./ก.ล.ต. เพื่อการศึกษาและทดสอบระบบเท่านั้น
+ไม่ใช่ผลิตภัณฑ์ทางการเงินหรือคำแนะนำทางกฎหมายที่ใช้งานจริง*
