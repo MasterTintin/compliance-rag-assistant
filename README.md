@@ -1,7 +1,7 @@
 # Compliance RAG Assistant
 
-> Enterprise Knowledge Assistant สำหรับค้นหาและตอบคำถามจากเอกสารกำกับดูแล (regulatory/compliance
-> documents) พร้อม citation ที่ตรวจสอบย้อนกลับได้เสมอ — สร้างขึ้นเพื่อจำลองปัญหาจริงที่ compliance
+> Enterprise Knowledge Assistant สำหรับค้นหาและตอบคำถามจากเอกสารกำกับดูแล 
+> พร้อม citation ที่ตรวจสอบย้อนกลับได้เสมอ — สร้างขึ้นเพื่อจำลองปัญหาจริงที่ compliance
 > officer ในสถาบันการเงินเจอ ไม่ใช่แค่ demo "chat with PDF" ทั่วไป
 
 [![CI](https://github.com/USERNAME/compliance-rag-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/compliance-rag-assistant/actions)
@@ -24,19 +24,28 @@ demo ทั่วไปมักข้าม:
 
 ## Demo
 
-**สถานะตอนนี้:** Retrieval pipeline (ingestion → chunking → embedding → vector search) รันและทดสอบแล้วจริงกับเอกสารตัวอย่าง — ค้นเจอ chunk ที่เกี่ยวข้องถูกต้องตามที่คาดไว้ (ดู log ใน `demo.py`) ส่วน Generation service (`src/generation/generator.py`) เขียนเสร็จและเชื่อมเข้า pipeline เรียบร้อยแล้ว แต่ยังไม่ได้รัน live demo แบบเต็มเพราะติดเรื่อง API credit ชั่วคราว — โค้ดพร้อมรันได้ทันทีเมื่อมี `ANTHROPIC_API_KEY` ที่มีเครดิต
+ระบบรันครบ end-to-end จริงแล้ว (ingestion → retrieval → generation) ทดสอบผ่าน `demo.py` และผ่าน evaluation harness เต็มชุด 30 คำถามแล้ว (ดูผลด้านล่าง)
 
-**ตัวอย่าง output ที่คาดหวัง** (ตามรูปแบบที่กำหนดใน system prompt ของ `generator.py` — ยังไม่ใช่ output จริงจากการรัน จะอัปเดตด้วย log จริงเร็วๆ นี้):
+**ตัวอย่าง output จริงจากการรัน `demo.py`:**
 
 ```
 Q: การดำรงเงินกองทุนของผู้ประกอบธุรกิจฉบับปัจจุบันคือฉบับไหน?
 
-A: ฉบับปัจจุบันคือประกาศ สธ. 64/2563 (ฉบับประมวล) ซึ่งรวมการแก้ไขทั้งหมดไว้เป็นฉบับเดียว [1]
-   รวมถึงการแก้ไขล่าสุดตามประกาศ กธ. 30/2567 (ฉบับที่ 4) [2]
+A: ประกาศที่ใช้บังคับในปัจจุบันคือ ประกาศคณะกรรมการกำกับหลักทรัพย์และตลาดหลักทรัพย์
+   ที่ กธ. 30/2567 เรื่อง การดำรงเงินกองทุนของผู้ประกอบธุรกิจ (ฉบับที่ 4) [1]
 
-   [1] sec_9563s_consolidated.pdf
-   [2] sec_10426_amendment4.pdf
+   ประกาศฉบับที่ 4 นี้แก้ไขเพิ่มเติมประกาศแม่ กธ. 26/2563 ลงวันที่ 8 ตุลาคม 2563
+   มีผลใช้บังคับตั้งแต่วันที่ 1 พฤศจิกายน 2567 [2]
+
+   [1] sec_10426_amendment4 หน้า 1
+   [2] sec_10426_amendment4 หน้า 5 (ข้อ 7)
 ```
+
+*หมายเหตุ: ตอนทดสอบด้วย ground truth set เจอว่าคำถามแรกที่เขียนไว้ตอนต้น (`q001`) เข้าใจผิดว่า
+"การดำรงเงินกองทุน" (กลุ่มประกาศ กธ.) กับ "การคำนวณและการรายงานการคำนวณเงินกองทุน" (กลุ่มประกาศ สธ.)
+เป็นเรื่องเดียวกัน — ทั้งที่จริงเป็นคนละกลุ่มประกาศ ระบบตอบถูกต้องตามคำถามจริง แต่ ground truth
+เขียนผิด จึงแก้ไข ground truth ให้ตรงกับความเป็นจริงแทน เป็นตัวอย่างที่ดีว่าทำไม evaluation
+framework ถึงสำคัญ — มันช่วยจับความเข้าใจผิดได้ แม้จะเป็นความเข้าใจผิดของคนเขียนเองก็ตาม*
 
 ## Architecture
 
@@ -93,41 +102,57 @@ curl -X POST http://localhost:8000/query \
 
 ```
 ├── src/
-│   ├── ingestion/     
-│   ├── retrieval/      
-│   ├── generation/      
-│   ├── api/             
-│   └── eval/            
-├── tests/               
+│   ├── ingestion/      # แปลงเอกสาร → chunks → vector DB
+│   ├── retrieval/      # hybrid search + re-ranking
+│   ├── generation/      # grounded generation + citation
+│   ├── api/             # FastAPI endpoints
+│   └── eval/             # evaluation harness
+├── tests/               # unit + integration tests
 ├── docs/
-│   └── architecture.md  
+│   └── architecture.md  # design decisions & trade-offs
 ├── docker/
-└── data/sample_docs/    
+└── data/sample_docs/    # เอกสารตัวอย่างสำหรับทดสอบ
 ```
 
 ## Evaluation Results
 
-<!-- TODO: ใส่ตารางผลจริงหลังรัน eval harness เสร็จ อย่าปล่อยว่างตอน submit -->
+รันจริงกับ ground truth set ทั้ง 30 คำถาม (`python -m src.eval.run_eval`) — ผลลัพธ์ล่าสุด:
 
 | Metric | Score |
 |---|---|
-| Retrieval Precision@5 | TBD |
-| Answer Faithfulness | TBD |
-| Citation Accuracy | TBD |
-| Latency (p50 / p99) | TBD |
+| Retrieval Hit Rate | 29/30 (96.7%) |
+| Citation Correctness | 27/28 (96.4%) |
+| Answer Correctness (Claude-as-judge) | 16/30 (53.3%) |
+
+**Finding ที่น่าสนใจ:** Answer Correctness แยกตามความยากของคำถามต่างกันชัดเจนมาก —
+
+| ความยาก | ผ่าน |
+|---|---|
+| Basic | 8/9 (88.9%) |
+| Intermediate | 2/7 (28.6%) |
+| Advanced | 6/14 (42.9%) |
+
+Retrieval และ Citation แม่นเกือบสมบูรณ์ (>96%) แต่ Answer Correctness ร่วงหนักในคำถามที่ออกแบบมา
+ให้ทดสอบ multi-stage deadline, comparative precision และ list completeness — สรุปคือ **ระบบหา context ที่ถูกต้องเจอเกือบทุกครั้ง
+แต่ generation ยังพลาดเวลาต้องรวบรวม/เปรียบเทียบรายละเอียดหลายจุดในคำตอบเดียว** นี่คือจุดที่วางแผน
+ปรับปรุงต่อ (ดู future work ใน `docs/architecture.md`) ไม่ใช่จุดที่มองข้าม
 
 รายละเอียดวิธีวัดผล: [`docs/architecture.md#4-evaluation-strategy`](docs/architecture.md)
 
 ## Known Limitations
 
-- Generation service ยังไม่ได้รัน live demo แบบเต็ม (ติด API credit ชั่วคราว) — retrieval ทดสอบแล้วจริง โค้ด generation พร้อมรันได้ทันทีเมื่อมีเครดิต
+- Answer Correctness อยู่ที่ 53.3% โดยเฉพาะคำถามระดับ advanced ที่ต้องเปรียบเทียบ/รวบรวมตัวเลข
+  หลายจุด (ดู Evaluation Results ด้านบน) — เป็นจุดที่ยังต้องปรับปรุง prompt หรือเพิ่ม
+  re-ranking เพื่อให้ context ที่ส่งเข้า LLM ครบถ้วนกว่านี้
 - ยังไม่รองรับเอกสารภาพสแกนคุณภาพต่ำ (ต้องใช้ OCR pipeline เพิ่ม)
 - ยังไม่มี role-based access control — v1 นี้สมมติว่าผู้ใช้ทุกคนเข้าถึงเอกสารได้เท่ากัน
+- ยังไม่มี FastAPI endpoint ที่ใช้งานจริง (`src/api/` ว่าง) — ตอนนี้ทดสอบผ่าน `demo.py` และ
+  `src/eval/run_eval.py` โดยตรง
 - ดู future work เพิ่มเติมใน [`docs/architecture.md`](docs/architecture.md)
 
 ## Status
 
-อยู่ระหว่างพัฒนา — ดู progress ได้ที่ [Projects board](https://github.com/USERNAME/compliance-rag-assistant/projects/1)
+🚧 อยู่ระหว่างพัฒนา — ดู progress ได้ที่ [Projects board](https://github.com/USERNAME/compliance-rag-assistant/projects/1)
 
 ## License
 
